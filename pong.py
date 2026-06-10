@@ -17,6 +17,7 @@ PADDLE_WIDTH = 18
 PADDLE_HEIGHT = 105
 BALL_SIZE = 20
 WIN_SCORE = 5
+GOAL_PAUSE_MS = 1200
 
 
 class GameSprite(sprite.Sprite):
@@ -93,6 +94,8 @@ left_score = 0
 right_score = 0
 game_over = False
 winner_text = ""
+goal_text = ""
+goal_pause_until = 0
 run = True
 
 while run:
@@ -104,11 +107,16 @@ while run:
             right_score = 0
             game_over = False
             winner_text = ""
+            goal_text = ""
+            goal_pause_until = 0
             left_player.rect.y = WIN_HEIGHT // 2 - PADDLE_HEIGHT // 2
             right_player.rect.y = WIN_HEIGHT // 2 - PADDLE_HEIGHT // 2
             ball.reset(choice([-1, 1]))
 
-    if not game_over:
+    now = time.get_ticks()
+    goal_pause = now < goal_pause_until
+
+    if not game_over and not goal_pause:
         left_player.update_l()
         right_player.update_r()
         ball.update()
@@ -125,10 +133,14 @@ while run:
 
         if ball.rect.right < 0:
             right_score += 1
+            goal_text = "Правый игрок забил!"
+            goal_pause_until = time.get_ticks() + GOAL_PAUSE_MS
             ball.reset(1)
 
         if ball.rect.left > WIN_WIDTH:
             left_score += 1
+            goal_text = "Левый игрок забил!"
+            goal_pause_until = time.get_ticks() + GOAL_PAUSE_MS
             ball.reset(-1)
 
         if left_score >= WIN_SCORE:
@@ -154,6 +166,8 @@ while run:
     if game_over:
         draw_text(window, winner_text, 54, WHITE, WIN_WIDTH // 2, WIN_HEIGHT // 2 - 24)
         draw_text(window, "Нажми SPACE, чтобы начать заново", 32, WHITE, WIN_WIDTH // 2, WIN_HEIGHT // 2 + 28)
+    elif goal_pause:
+        draw_text(window, goal_text, 48, WHITE, WIN_WIDTH // 2, WIN_HEIGHT // 2)
 
     display.update()
     clock.tick(FPS)
